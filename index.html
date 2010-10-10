@@ -1,0 +1,333 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Sidebar Mockup</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+
+    <script src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load("jquery", "1.4.2", {uncompressed:true});
+        google.load("jqueryui", "1.8.5", {uncompressed:true});
+    </script>
+    <script type="text/javascript">
+        jQuery(document).ready(function(){
+
+            playlist_state = {
+                current_album: jQuery("#playlist :first"),
+                current_track: jQuery("#playlist:first-child ol .album-track:first")
+            }
+
+            jQuery("#playlist").bind({
+                mouseenter: function(e){
+                    jQuery(this)
+                        .stop()
+                        .animate({width: "150px"})
+                        .children().not(playlist_state.current_album)
+                            .stop(true, true)
+                            .slideDown('fast')
+                            .css("width", 50+"px")
+                            .css("float", "right");
+                    jQuery(".album-cover")
+                        .stop()
+                        .animate({width: 50, height: 50});
+
+                },
+                mouseleave: function(e){
+                    jQuery(this)
+                        .stop()
+                        .animate({width: "32px"})
+                        .children().not(playlist_state.current_album)
+                            .stop(true, true)
+                            .slideUp('fast');
+                    jQuery(".album-cover")
+                        .stop()
+                        .animate({width: 16, height: 16});
+                }
+            });
+
+            jQuery(".album:not(:first)").hide();
+            jQuery(".album:not(:first) ol").hide();
+
+            jQuery(".album-cover")
+                .click(function(e){
+                    jQuery(this).next().slideToggle('fast');
+                    return false;//.animate({height: "100px"});
+                });
+
+
+            jQuery(".buddy").draggable({
+                handle: ".buddy-info",
+                helper: "clone",
+                revert: true,
+                connectToSortable: "#buddy-list"
+            })
+            .disableSelection();
+
+            jQuery("#buddy-list")
+                .sortable()
+                .mouseover(function(e){
+                    jQuery(this).stop().animate({width: "150px"});
+                })
+                .mouseout(function(e){
+                    jQuery(this).stop().animate({width: "32px"});
+                });
+
+            jQuery("#buddy-list")
+                .append(create_buddy("Amanda Joy Hicks", "away"))
+                .append(create_buddy("Brian", "offline"))
+                ;//.sortable("refresh");
+
+            jQuery("#desktop").droppable({
+                activeClass: 'ui-state-highlight',
+                greedy: true,
+                drop: function(event, ui) {
+                    console.log(ui.draggable.parent());
+                    if (ui.draggable.parent().attr("id") = "buddy-list") {
+                        var name = ui.draggable.data("name");
+                        var status = ui.draggable.data("status")
+                        jQuery("#desktop").append(create_buddy(name, status));
+                        return false;
+                        //jQuery(ui.sender).sortable("cancel").sortable("refresh");
+                    }
+                }
+            });
+
+            //jQuery("#buddy-list").accordion({
+            //    header: "> div > .buddy-info"
+            //});
+
+            jQuery(".buddy-info")
+                .click(function(e){
+                    jQuery(this).next().slideToggle('fast');
+                    return false;//.animate({height: "100px"});
+                })
+                .next()
+                    .hide();
+
+            jQuery(".popout").click(function(e){
+                that = jQuery(this).clone();
+                that.css({top: 50, left: 50});
+            });
+
+            jQuery(".album-track").click(function(e){
+                jQuery(".track-playing").removeClass("track-playing");
+                self = jQuery(this);
+                self.addClass("track-playing")
+                    .stop()
+                    // Leaving this be for now
+                    // it works before the user hovers over the widget
+                    // then the track refuses to slide outside the widget
+                    //.animate({right: 150})
+                    //.delay(5000)
+                    //.animate({right: 0});
+                    .animate({"background-color": "yellow"})
+                    .delay(2000)
+                    .animate({"background-color": "orange"});
+
+                playlist_state.current_album = self.parent().parent();
+                playlist_state.current_track = self;
+            });
+
+            setInterval(function(){
+                var tracks = jQuery("#playlist").children(".album-track");
+                var tracks_length = tracks.length;
+                for(var i=0; i < tracks_length; i++) {
+                    var track = jQuery(tracks[i]);
+                    if (track.hasClass("track-playing")) {
+                        if ((i+1) == tracks_length) {
+                            tracks[0].click();
+                        } else {
+                            tracks[i+1].click();
+                            break;
+                        }
+                    }
+                }
+
+            }, 2000);
+        });
+
+function create_buddy(name, status, icon) {
+    var $buddy = jQuery("#templates .buddy").clone();
+    $buddy.find(".buddy-info")
+        .click(function(e){
+            jQuery(this).find(".buddy-chat").slideToggle('fast');
+            return false;
+        })
+        .find(".buddy-status")
+            .addClass("status-"+status)
+            .end()
+        .find(".buddy-name")
+            .text(name)
+            .end()
+        .end()
+    .data("name", name)
+    .data("status", status);
+    if ($buddy.parent().hasClass(".buddy-list")) {
+            //$buddy.draggable("option", "revert", "valid");
+        //jQuery("#buddy-list").sortable("refresh");
+    } else {
+        $buddy.draggable({
+            handle: ".buddy-info",
+            helper: "clone",
+            revert: true,
+            connectToSortable: "#buddy-list"
+        })
+        .disableSelection();
+    }
+    return $buddy;
+}
+    </script>
+</head>
+<body>
+    <div id="desktop" class="droppable">
+        <div class="buddy">
+            <div class="buddy-info">
+                <div class="buddy-state">
+                    <div class="buddy-status status-busy"></div>
+                    <div class="buddy-icon"></div>
+                </div>
+                <div class="buddy-name">Amanda Joy Hicks</div>
+            </div>
+            <div class="buddy-chat">
+                <div class="chat-display"></div>
+                <input type="text" class="chat-input" />
+            </div>
+        </div>
+        <div id="sidebar">
+            <ol id="playlist" class="widget">
+                <li class="album">
+                    <div class="album-cover"></div>
+                    <ol>
+                        <li class="album-track">Spartan</li>
+                        <li class="album-track">Ash Like Snow</li>
+                        <li class="album-track track-playing">Sunburn</li>
+                        <li class="album-track">One Prairie Outpost</li>
+                    </ol>
+                </li>
+                <li class="album">
+                    <div class="album-cover"></div>
+                    <ol>
+                        <li class="album-track">Spartan</li>
+                        <li class="album-track">Ash Like Snow</li>
+                        <li class="album-track">Sunburn</li>
+                        <li class="album-track">One Prairie Outpost</li>
+                    </ol>
+                </li>
+                <li class="album">
+                    <div class="album-cover"></div>
+                    <ol>
+                        <li class="album-track">Spartan</li>
+                        <li class="album-track">Ash Like Snow</li>
+                        <li class="album-track">Sunburn</li>
+                        <li class="album-track">One Prairie Outpost</li>
+                    </ol>
+                </li>
+                <li class="album">
+                    <div class="album-cover"></div>
+                    <ol>
+                        <li class="album-track">Spartan</li>
+                        <li class="album-track">Ash Like Snow</li>
+                        <li class="album-track">Sunburn</li>
+                        <li class="album-track">One Prairie Outpost</li>
+                    </ol>
+                </li>
+            </ol>
+            <ol id="buddy-list" class="widget">
+                <li class="buddy">
+                    <div class="buddy-info">
+                        <div class="buddy-status status-online"></div>
+                        <div class="buddy-icon"></div>
+                        <div class="buddy-name">Mike</div>
+                        <div class="buddy-controls">
+                            <span class="popout">x</span>
+                        </div>
+                    </div>
+                    <div class="buddy-chat">
+                        <div class="chat-display"></div>
+                        <input type="text" class="chat-input" />
+                    </div>
+                </li>
+
+                <li class="buddy">
+                    <div class="buddy-info">
+                        <div class="buddy-status status-online"></div>
+                        <div class="buddy-icon"></div>
+                        <div class="buddy-name">Ryan</div>
+                        <div class="buddy-controls">
+                            <span class="popout">x</span>
+                        </div>
+                    </div>
+                    <div class="buddy-chat">
+                        <div class="chat-display"></div>
+                        <input type="text" class="chat-input" />
+                    </div>
+                </li>
+
+<!--
+                <li class="buddy">
+                    <DIV class="buddy-info">
+                        <DIV class="buddy-status status-online"></DIV>
+                        <DIV class="buddy-icon"></DIV>
+                        <DIV class="buddy-icon">Amanda</DIV>
+                        <DIV class="buddy-controls">
+                            <SPAN class="buddy-icon">x</SPAN>
+                        </DIV>
+                    </DIV>
+                    <DIV class="buddy-chat">
+                        <DIV class="chat-display"></DIV>
+                        <INPUT class="chat-input" type="text">
+                    </DIV>
+                </li>
+                <li class="buddy">
+                    <div class="buddy-info">
+                        <div class="buddy-status status-busy"></div>
+                        <div class="buddy-icon"></div>
+                        <div class="buddy-name">Amanda Joy Hicks</div>
+                        <div class="buddy-controls">
+                            <span class="popout">x</span>
+                        </div>
+                    </div>
+                    <div class="buddy-chat">
+                        <div class="chat-display"></div>
+                        <input type="text" class="chat-input" />
+                    </div>
+                </li>
+
+                <li class="buddy">
+                    <div class="buddy-info">
+                        <div class="buddy-status status-offline"></div>
+                        <div class="buddy-icon"></div>
+                        <div class="buddy-name">Brian Hicks</div>
+                        <div class="buddy-controls">
+                            <span class="popout">x</span>
+                        </div>
+                    </div>
+                    <div class="buddy-chat">
+                        <div class="chat-display"></div>
+                        <input type="text" class="chat-input" />
+                    </div>
+                </li>
+                 -->
+            </ol>
+        </div>
+    </div>
+
+    <div id="templates" style="display: none;">
+        <li class="buddy">
+            <div class="buddy-info">
+                <div class="buddy-status"></div>
+                <div class="buddy-icon"></div>
+                <div class="buddy-name"></div>
+                <div class="buddy-controls">
+                    <span class="popout">x</span>
+                </div>
+            </div>
+            <div class="buddy-chat">
+                <div class="chat-display"></div>
+                <input type="text" class="chat-input" />
+            </div>
+        </li>
+    </div>
+</body>
+</html>
